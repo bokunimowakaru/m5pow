@@ -196,8 +196,8 @@ void loop(){                                    // 繰り返し実行する関�
         M5.Power.setPowerVin(PowerVin);
     }
     if(M5.BtnB.wasPressed()){
-        AutoBootOnLoad = !AutoBootOnLoad;
-        M5.Power.setAutoBootOnLoad(AutoBootOnLoad);
+        PowerBtnEn = !PowerBtnEn;
+        M5.Power.setPowerBtnEn(PowerBtnEn);
     }
     if(M5.BtnC.wasPressed()){
         Charge = !Charge;
@@ -208,7 +208,7 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.setCursor(40, 224, 2);
     M5.Lcd.print("["+ String(btn[PowerVin]) +"] PowerVin ");
     M5.Lcd.setCursor(132, 224, 2);
-    M5.Lcd.print("["+ String(btn[AutoBootOnLoad]) +"] AutoBoot ");
+    M5.Lcd.print("["+ String(btn[PowerBtnEn]) +"] PowerBtn ");
     M5.Lcd.setCursor(226, 224, 2);
     M5.Lcd.print("["+ String(btn[Charge]) +"] Charge ");
     delay(100);
