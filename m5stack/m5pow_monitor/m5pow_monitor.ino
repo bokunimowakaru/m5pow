@@ -188,7 +188,7 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.printf("PowerVin          = %s  \n",onoff[PowerVin]);
     M5.Lcd.printf("PowerBtnEn        = %s  \n",onoff[PowerBtnEn]);
     M5.Lcd.printf("AutoBootOnLoad    = %s  \n",onoff[AutoBootOnLoad]);
-    M5.Lcd.printf("Charge            = %s  \n",onoff[Charge]);
+//  M5.Lcd.printf("Charge            = %s  \n",onoff[Charge]);
     
     M5.update();                            // ボタン情報を更新
     if(M5.BtnA.wasPressed()){
