@@ -15,10 +15,10 @@ M5Stack Arduino Library API 情報：
     
 Datasheet; injoinic Crop. IP5306 寄存器文档 V1.21
     SYS_CTL0
-        7:6 "10"                // reserved ※
+        7:6 "00"                // reserved ※通常10,M5Stackは00
         5   Boost enable        // 通常は"1"
         4   Charger enable      // Start charging
-        3   "1"                 // reserved ※
+        3   "0"                 // reserved ※通常1,M5Stackは0
         2   AutoBootOnLoad      // auto start function.
         1   PowerBoostKeepOn    // always boost output mode.
         0   PowerBtnEn          // to accept the power button.
@@ -31,7 +31,7 @@ Datasheet; injoinic Crop. IP5306 寄存器文档 V1.21
         1   "0"                 // reserved ※
         0   LowPowerShutdown    // Enable energy saving shutdown function.
     SYS_CTL2
-        7:4 "0000"              // reserved ※
+        7:4 "0000"              // reserved ※通常0000,M5Stackは0100
         3:2 LowPowerShutdownTime// waiting time until the power is turned off.
         1:0 "00"                // reserved ※
 
@@ -44,16 +44,16 @@ Datasheet; injoinic Crop. IP5306 寄存器文档 V1.21
 
 bool PowerBoostOnOff  = false;  // Press and hold to turn on / off.
 bool PowerBoostSet    = false;  // ON / OFF in one short press.
-bool PowerBoostKeepOn = true;   // always boost output mode.
+bool PowerBoostKeepOn = false;  // always boost output mode.
 bool PowerVin         = true;   // the supply off, to turn on the power again.
 bool PowerWLEDSet     = false;  // to turn on the power LED
-bool PowerBtnEn       = false;  // to accept the power button.
+bool PowerBtnEn       = true;   // to accept the power button.
 bool AutoBootOnLoad   = true;   // auto start function.
-bool Charge           = true;   // Start charging
+bool Charge           = false;  // Start charging
 bool KeepLightLoad    = true;   // [deprecated] the current is small, not automatically shutdown
 bool LowPowerShutdown = true;   // [deprecated] Enable energy saving shutdown function.
 
-uint8_t progressBar = 100;
+uint8_t progressBar = 255;
 
 void printb(byte reg){
     for(int i = 7; i >= 0; i--){
@@ -95,24 +95,46 @@ void setup(){                                   // 起動時に一度だけ実�
     M5.Lcd.setCursor(0, 0, 2);
     M5.Lcd.printf("m5pow IP5306 monitor for M5Stack");
     
+    byte SYS_CTL0 = IP5306read(0x00);
+    byte SYS_CTL1 = IP5306read(0x01);
+    byte SYS_CTL2 = IP5306read(0x02);
+    
+    PowerBoostOnOff = (SYS_CTL1 >> 7 ) & 0x01;
+    PowerBoostSet   = (SYS_CTL1 >> 5 ) & 0x01;
+    PowerBoostKeepOn= (SYS_CTL0 >> 1 ) & 0x01;
+    PowerVin        = (SYS_CTL1 >> 2 ) & 0x01;
+    PowerWLEDSet    = (SYS_CTL1 >> 6 ) & 0x01;
+    PowerBtnEn      = (SYS_CTL0 >> 0 ) & 0x01;
+    AutoBootOnLoad  = (SYS_CTL0 >> 2 ) & 0x01;
+    Charge          = (SYS_CTL0 >> 4 ) & 0x01;
+    
     /***************************************************************************
-    下記のコメント化を解除するとIP5306を初期設定に戻します
+    下記のコメント化を解除するとIP5306のM5Stack用の初期設定に更新します。
     【注意】M5Stackのバージョンによっては動作不具合が生じるかもしれません
+    　　　　設定値を十分に検証のうえ、自己責任で利用してください
+    ***************************************************************************/
+    // IP5306write(0x00,0x25);                  // SYS_CTL0
+    // IP5306write(0x01,0x1D);                  // SYS_CTL1
+    // IP5306write(0x02,0x64);                  // SYS_CTL2
+    
+    /***************************************************************************
+    下記のコメント化を解除するとIP5306の初期設定に更新します。(M5Stack用では無い)
+    【注意】M5Stackでは動作不具合が生じるかもしれません
     　　　　設定値を十分に検証のうえ、自己責任で利用してください
     ***************************************************************************/
     // IP5306write(0x00,0xBE);                  // SYS_CTL0
     // IP5306write(0x01,0x1D);                  // SYS_CTL1
     // IP5306write(0x02,0x00);                  // SYS_CTL2
     
-    /* IP5306の設定をM5StackのAPIを使って書き込みます */
-    M5.Power.setPowerBoostOnOff(PowerBoostOnOff);
-    M5.Power.setPowerBoostSet(PowerBoostSet);
-    M5.Power.setPowerBoostKeepOn(PowerBoostKeepOn);
-    M5.Power.setPowerVin(PowerVin);
-    M5.Power.setPowerWLEDSet(PowerWLEDSet);
-    M5.Power.setPowerBtnEn(PowerBtnEn);
-    M5.Power.setAutoBootOnLoad(AutoBootOnLoad);
-    M5.Power.setCharge(Charge);
+    /* IP5306の設定をM5StackのAPIを使って書き込むためのサンプルです */
+    // M5.Power.setPowerBoostOnOff(PowerBoostOnOff);
+    // M5.Power.setPowerBoostSet(PowerBoostSet);
+    // M5.Power.setPowerBoostKeepOn(PowerBoostKeepOn);
+    // M5.Power.setPowerVin(PowerVin);
+    // M5.Power.setPowerWLEDSet(PowerWLEDSet);
+    // M5.Power.setPowerBtnEn(PowerBtnEn);
+    // M5.Power.setAutoBootOnLoad(AutoBootOnLoad);
+    // M5.Power.setCharge(Charge);
     // [deprecated] M5.Power.setKeepLightLoad(KeepLightLoad);
     // [deprecated] M5.Power.setLowPowerShutdown(LowPowerShutdown);
 }
@@ -133,7 +155,9 @@ void loop(){                                    // 繰り返し実行する関�
     char yesno[2][4]={"no","yes"};
 //  M5.Lcd.printf("canControl        = %s  \n",yesno[M5.Power.canControl()]);
     M5.Lcd.printf("isChargeFull      = %s  \n",yesno[M5.Power.isChargeFull()]);
-    M5.Lcd.printf("isCharging        = %s  \n",onoff[M5.Power.isCharging()]);
+    
+    Charge = (bool)M5.Power.isCharging();
+    M5.Lcd.printf("isCharging        = %s  \n",onoff[Charge]);
     uint8_t BatteryLevel = M5.Power.getBatteryLevel();
     M5.Lcd.printf("BatteryLevel      = ");
     if(Charge){
@@ -161,10 +185,10 @@ void loop(){                                    // 繰り返し実行する関�
     M5.Lcd.printf("PowerBoostOnOff   = %s  \n",onoff[PowerBoostOnOff]);
     M5.Lcd.printf("PowerBoostSet     = %s  \n",onoff[PowerBoostSet]);
     M5.Lcd.printf("PowerBoostKeepOn  = %s  \n",onoff[PowerBoostKeepOn]);
-//  M5.Lcd.printf("PowerVin          = %s  \n",onoff[PowerVin]);
+    M5.Lcd.printf("PowerVin          = %s  \n",onoff[PowerVin]);
     M5.Lcd.printf("PowerBtnEn        = %s  \n",onoff[PowerBtnEn]);
-//  M5.Lcd.printf("AutoBootOnLoad    = %s  \n",onoff[AutoBootOnLoad]);
-//  M5.Lcd.printf("Charge            = %s  \n",onoff[Charge]);
+    M5.Lcd.printf("AutoBootOnLoad    = %s  \n",onoff[AutoBootOnLoad]);
+    M5.Lcd.printf("Charge            = %s  \n",onoff[Charge]);
     
     M5.update();                            // ボタン情報を更新
     if(M5.BtnA.wasPressed()){
